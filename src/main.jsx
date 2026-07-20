@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Plus, Trash2, Copy, Check, FileText, RotateCcw, Save } from 'lucide-react';
 import './styles.css';
 
-const STORAGE_KEY = 'rapport-ssi-semaine-v2';
+const STORAGE_KEY = 'rapport-ssi-semaine-v3';
 
 // Les 5 états du SSI définis par la NF S 61-933.
 const SSI_STATES = [
@@ -14,7 +14,7 @@ const SSI_STATES = [
   'État d’alarme feu',
 ];
 
-const DAYS = ['Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
 
 const emptyTest = () => ({
   id: crypto.randomUUID(),
@@ -22,14 +22,12 @@ const emptyTest = () => ({
   reference: '',
   designation: '',
   position: 'PS',
-  result: 'Conforme',
+  result: '',
   observation: '',
 });
 
 const emptyDay = () => ({
   site: '',
-  arrivalTime: '',
-  departureTime: '',
   arrivalState: SSI_STATES[0],
   departureState: SSI_STATES[0],
   workSummary: '',
@@ -46,9 +44,7 @@ const defaultData = DAYS.reduce((acc, day) => {
 function buildGeneratedText(dayName, day) {
   const lines = [];
   const siteText = day.site ? ` sur le site ${day.site}` : '';
-  const timeText = day.arrivalTime ? ` à ${day.arrivalTime}` : '';
-
-  lines.push(`${dayName}${siteText} : à mon arrivée${timeText}, le SSI était en ${day.arrivalState.toLowerCase()}.`);
+  lines.push(`${dayName}${siteText} : avant intervention, le SSI présentait l’état suivant : ${day.arrivalState}.`);
 
   if (day.workSummary.trim()) {
     lines.push(`Travaux et opérations réalisés : ${day.workSummary.trim()}`);
@@ -58,7 +54,8 @@ function buildGeneratedText(dayName, day) {
     lines.push('Essais réalisés :');
     day.tests.forEach((test) => {
       const name = [test.type, test.reference, test.designation].filter(Boolean).join(' – ');
-      let sentence = `${name || test.type} constaté(e) en ${test.position}. Résultat : ${test.result.toLowerCase()}.`;
+      let sentence = `${name || test.type} constaté(e) en ${test.position}.`;
+      if (test.result) sentence += ` Résultat : ${test.result.toLowerCase()}.`;
       if (test.observation.trim()) sentence += ` Observation : ${test.observation.trim()}`;
       lines.push(`• ${sentence}`);
     });
@@ -68,8 +65,7 @@ function buildGeneratedText(dayName, day) {
     lines.push(`Anomalies ou remarques : ${day.anomalies.trim()}`);
   }
 
-  const departureTimeText = day.departureTime ? ` à ${day.departureTime}` : '';
-  lines.push(`À mon départ${departureTimeText}, le SSI était en ${day.departureState.toLowerCase()}.`);
+  lines.push(`Après intervention, le SSI est laissé dans l’état suivant : ${day.departureState}.`);
 
   return lines.join('\n\n');
 }
@@ -137,7 +133,7 @@ function App() {
         <div>
           <p className="eyebrow">Suivi hebdomadaire</p>
           <h1>Rapport SSI</h1>
-          <p className="subtitle">Mardi à vendredi — saisie et sauvegarde automatiques</p>
+          <p className="subtitle">Lundi à vendredi — saisie et sauvegarde automatiques</p>
         </div>
         <div className={`save-state ${saved ? 'saved' : ''}`}>
           {saved ? <Check size={17} /> : <Save size={17} />}
@@ -166,22 +162,10 @@ function App() {
                 <h2>Informations générales</h2>
               </div>
             </div>
-            <div className="grid two-cols">
-              <label>
-                Site / bâtiment
-                <input value={day.site} onChange={(e) => updateDay({ site: e.target.value })} placeholder="Ex. Bâtiment A" />
-              </label>
-              <div className="grid two-cols compact">
-                <label>
-                  Heure d’arrivée
-                  <input type="time" value={day.arrivalTime} onChange={(e) => updateDay({ arrivalTime: e.target.value })} />
-                </label>
-                <label>
-                  Heure de départ
-                  <input type="time" value={day.departureTime} onChange={(e) => updateDay({ departureTime: e.target.value })} />
-                </label>
-              </div>
-            </div>
+            <label>
+              Site / bâtiment
+              <input value={day.site} onChange={(e) => updateDay({ site: e.target.value })} placeholder="Ex. Bâtiment A" />
+            </label>
           </div>
 
           <div className="card">
@@ -190,13 +174,13 @@ function App() {
             </div>
             <div className="grid two-cols">
               <label>
-                État à l’arrivée
+                État du SSI avant intervention
                 <select value={day.arrivalState} onChange={(e) => updateDay({ arrivalState: e.target.value })}>
                   {SSI_STATES.map((state) => <option key={state}>{state}</option>)}
                 </select>
               </label>
               <label>
-                État au départ
+                État du SSI après intervention
                 <select value={day.departureState} onChange={(e) => updateDay({ departureState: e.target.value })}>
                   {SSI_STATES.map((state) => <option key={state}>{state}</option>)}
                 </select>
@@ -263,7 +247,7 @@ function App() {
                       <label>
                         Résultat
                         <select value={test.result} onChange={(e) => updateTest(test.id, { result: e.target.value })}>
-                          <option>Conforme</option><option>Non conforme</option><option>Non vérifié</option>
+                          <option value="">Non renseigné</option><option>Conforme</option><option>Non conforme</option><option>Sans objet</option>
                         </select>
                       </label>
                       <label className="wide full">

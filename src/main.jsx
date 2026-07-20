@@ -3,14 +3,15 @@ import { createRoot } from 'react-dom/client';
 import { Plus, Trash2, Copy, Check, FileText, RotateCcw, Save } from 'lucide-react';
 import './styles.css';
 
-const STORAGE_KEY = 'rapport-ssi-semaine-v1';
+const STORAGE_KEY = 'rapport-ssi-semaine-v2';
 
+// Les 5 états du SSI définis par la NF S 61-933.
 const SSI_STATES = [
   'État de veille',
-  'État de veille restreinte',
-  'État d’alarme',
   'État de sécurité',
-  'État hors service',
+  'État d’anomalie',
+  'État de dérangement',
+  'État d’alarme feu',
 ];
 
 const DAYS = ['Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
